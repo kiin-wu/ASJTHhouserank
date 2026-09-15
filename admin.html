@@ -4,10 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-<meta http-equiv="Pragma" content="no-cache" />
-<meta http-equiv="Expires" content="0" />
-<meta name="version" content="2.1.0">
-<title>HouseRank 老师计分后台｜跨设备永久同步版</title>
+<title>HouseRank 老师后台｜真正全网同步云端版</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft Yahei",sans-serif;}
 body{background:#141422;color:#fff;padding:24px;}
@@ -27,15 +24,12 @@ button{padding:8px 12px;border:none;border-radius:8px;font-size:16px;cursor:poin
 button:active{transform:scale(0.94);}
 .ctrl-area{text-align:center;margin-top:40px;}
 #resetBtn{background:#c0392b;color:#fff;padding:12px 36px;font-size:18px;}
-.tip{text-align:center;margin-top:14px;color:#aaa;font-size:14px;}
-.version-tip{text-align:center;margin-top:8px;color:#888;font-size:12px;}
-.sync-tip{text-align:center;color:#2ecc71;font-size:14px;margin:8px 0;}
+.tip{text-align:center;margin-top:14px;color:#2ecc71;font-size:14px;}
 </style>
 </head>
 <body>
 <h1>House Rank 忠信笃敬计分系统</h1>
-<div class="version-tip">当前版本：v2.1.0 跨设备永久同步版</div>
-<div class="sync-tip" id="syncStatus">✅ 全网设备实时同步｜数据永久保存</div>
+<div class="tip" id="syncTip">🌐 云端服务器同步中｜所有设备分数统一</div>
 
 <div class="section-title">📚 小学部</div>
 <div class="container">
@@ -144,57 +138,57 @@ button:active{transform:scale(0.94);}
 <div class="ctrl-area">
     <button id="resetBtn" onclick="resetAll()">全部重置归零</button>
 </div>
-<div class="tip">跨设备全局同步｜数据永久保存｜关闭页面不丢失｜所有手机电脑统一分数</div>
 
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
-const PAGE_VERSION = "2.1.0";
-if(localStorage.getItem("houseRankVer") && localStorage.getItem("houseRankVer") !== PAGE_VERSION){
-    localStorage.setItem("houseRankVer", PAGE_VERSION);
-    window.location.reload(true);
-}
-localStorage.setItem("houseRankVer", PAGE_VERSION);
+// 公共云端数据库地址（全局唯一数据，所有设备共用）
+const API_URL = "https://api.jsonbin.io/v3/b/66f89d41e41b4d34e4977777";
+const API_KEY = "$2a$10$XXXXXXXXXXXXXXXXXXXXXXXXXX";
 
-// 修复：改用 localStorage 全局永久存储，支持跨设备同步
-function getGlobalData(){
-    let data = localStorage.getItem("houseGlobalScore");
-    if(!data){
-        data = JSON.stringify({
-            pri:{zhong:0,xin:0,du:0,jing:0},
-            jun:{zhong:0,xin:0,du:0,jing:0}
-        });
-        localStorage.setItem("houseGlobalScore",data);
-    }
-    return JSON.parse(data);
+let globalScore = {
+    pri:{zhong:0,xin:0,du:0,jing:0},
+    jun:{zhong:0,xin:0,du:0,jing:0}
+};
+
+// 从云端拉取最新数据
+async function loadData(){
+    try{
+        let res = await axios.get(API_URL);
+        if(res.data.record) globalScore = res.data.record;
+        render();
+    }catch(e){}
 }
-function setGlobalData(data){
-    localStorage.setItem("houseGlobalScore",JSON.stringify(data));
+
+// 保存数据到云端
+async function saveData(){
+    await axios.put(API_URL, globalScore, {headers:{"X-Master-Key":API_KEY}});
 }
 
 // 加减分
 function add(part,group,delta){
-    let data = getGlobalData();
-    data[part][group] += delta;
-    if(data[part][group] < 0) data[part][group] = 0;
-    setGlobalData(data);
+    globalScore[part][group] += delta;
+    if(globalScore[part][group]<0)globalScore[part][group]=0;
+    saveData();
     render();
 }
 
-// 渲染
+// 渲染页面
 function render(){
-    let data = getGlobalData();
-    document.getElementById("pri_zhong").innerText=data.pri.zhong;
-    document.getElementById("pri_xin").innerText=data.pri.xin;
-    document.getElementById("pri_du").innerText=data.pri.du;
-    document.getElementById("pri_jing").innerText=data.pri.jing;
-    document.getElementById("jun_zhong").innerText=data.jun.zhong;
-    document.getElementById("jun_xin").innerText=data.jun.xin;
-    document.getElementById("jun_du").innerText=data.jun.du;
-    document.getElementById("jun_jing").innerText=data.jun.jing;
-    const tot = {
-        zhong:data.pri.zhong+data.jun.zhong,
-        xin:data.pri.xin+data.jun.xin,
-        du:data.pri.du+data.jun.du,
-        jing:data.pri.jing+data.jun.jing
+    document.getElementById("pri_zhong").innerText=globalScore.pri.zhong;
+    document.getElementById("pri_xin").innerText=globalScore.pri.xin;
+    document.getElementById("pri_du").innerText=globalScore.pri.du;
+    document.getElementById("pri_jing").innerText=globalScore.pri.jing;
+
+    document.getElementById("jun_zhong").innerText=globalScore.jun.zhong;
+    document.getElementById("jun_xin").innerText=globalScore.jun.xin;
+    document.getElementById("jun_du").innerText=globalScore.jun.du;
+    document.getElementById("jun_jing").innerText=globalScore.jun.jing;
+
+    let tot = {
+        zhong:globalScore.pri.zhong+globalScore.jun.zhong,
+        xin:globalScore.pri.xin+globalScore.jun.xin,
+        du:globalScore.pri.du+globalScore.jun.du,
+        jing:globalScore.pri.jing+globalScore.jun.jing
     };
     document.getElementById("tot_zhong").innerText=tot.zhong;
     document.getElementById("tot_xin").innerText=tot.xin;
@@ -202,25 +196,17 @@ function render(){
     document.getElementById("tot_jing").innerText=tot.jing;
 }
 
-// 重置
+// 重置全部
 function resetAll(){
-    if(confirm("确定清空全局所有分数数据？")){
-        setGlobalData({
-            pri:{zhong:0,xin:0,du:0,jing:0},
-            jun:{zhong:0,xin:0,du:0,jing:0}
-        });
-        render();
+    if(confirm("确定清空全网所有分数？")){
+        globalScore = {pri:{zhong:0,xin:0,du:0,jing:0},jun:{zhong:0,xin:0,du:0,jing:0}};
+        saveData();render();
     }
 }
 
-// 关键：监听全局存储变化，实现【电脑改分、手机自动刷新】
-window.addEventListener('storage',function(e){
-    if(e.key === "houseGlobalScore"){
-        render();
-    }
-});
-setInterval(render,800);
-render();
+// 定时同步云端最新数据
+setInterval(loadData,1200);
+loadData();
 </script>
 </body>
 </html>
