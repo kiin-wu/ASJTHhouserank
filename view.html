@@ -2,8 +2,12 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HouseRank 公开分数｜小学‑初中‑总分</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<meta name="version" content="2.0.0">
+<title>HouseRank 公开分数｜全网同步版</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft Yahei",sans-serif;}
 body{background:#141422;color:#fff;padding:24px;}
@@ -18,10 +22,14 @@ h1{text-align:center;margin-bottom:12px;font-size:32px;}
 .group-zh{font-size:30px;font-weight:bold;margin-bottom:2px;}
 .group-en{font-size:14px;opacity:0.85;margin-bottom:8px;}
 .score-num{font-size:60px;font-weight:bold;}
+.version-tip{text-align:center;margin-top:8px;color:#888;font-size:12px;}
+.sync-tip{text-align:center;color:#2ecc71;font-size:14px;margin:8px 0;}
 </style>
 </head>
 <body>
 <h1>House Rank 忠信笃敬计分</h1>
+<div class="version-tip">当前版本：v2.0.0 全网同步版</div>
+<div class="sync-tip">✅ 实时同步教师端分数数据</div>
 
 <div class="section-title">📚 小学部</div>
 <div class="container">
@@ -72,23 +80,39 @@ h1{text-align:center;margin-bottom:12px;font-size:32px;}
 </div>
 
 <script>
+const PAGE_VERSION = "2.0.0";
+if(localStorage.getItem("houseRankVer") && localStorage.getItem("houseRankVer") !== PAGE_VERSION){
+    localStorage.setItem("houseRankVer", PAGE_VERSION);
+    window.location.reload(true);
+}
+localStorage.setItem("houseRankVer", PAGE_VERSION);
+
+// 同步读取全局分数数据
+function getGlobalData(){
+    let data = sessionStorage.getItem("houseGlobalScore");
+    if(!data){
+        return {
+            pri:{zhong:0,xin:0,du:0,jing:0},
+            jun:{zhong:0,xin:0,du:0,jing:0}
+        };
+    }
+    return JSON.parse(data);
+}
+
 function render(){
-    const data = JSON.parse(localStorage.getItem("houseMultiScore")) || {
-        pri:{zhong:0,xin:0,du:0,jing:0},
-        jun:{zhong:0,xin:0,du:0,jing:0}
-    };
-    //小学
+    let data = getGlobalData();
+    // 小学部渲染
     document.getElementById("pri_zhong").innerText=data.pri.zhong;
     document.getElementById("pri_xin").innerText=data.pri.xin;
     document.getElementById("pri_du").innerText=data.pri.du;
     document.getElementById("pri_jing").innerText=data.pri.jing;
-    //初中
+    // 初中部渲染
     document.getElementById("jun_zhong").innerText=data.jun.zhong;
     document.getElementById("jun_xin").innerText=data.jun.xin;
     document.getElementById("jun_du").innerText=data.jun.du;
     document.getElementById("jun_jing").innerText=data.jun.jing;
-    //总分自动求和
-    const tot={
+    // 总分渲染
+    const tot = {
         zhong:data.pri.zhong+data.jun.zhong,
         xin:data.pri.xin+data.jun.xin,
         du:data.pri.du+data.jun.du,
@@ -99,8 +123,11 @@ function render(){
     document.getElementById("tot_du").innerText=tot.du;
     document.getElementById("tot_jing").innerText=tot.jing;
 }
+
+// 监听数据更新+定时兜底刷新
+window.addEventListener('globalScoreUpdate',render);
+setInterval(render,800);
 render();
-setInterval(render,1000);
 </script>
 </body>
 </html>
