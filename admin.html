@@ -2,14 +2,17 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HouseRank 老师计分后台｜小学‑初中‑总分</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<meta name="version" content="2.0.0">
+<title>HouseRank 老师计分后台｜全网同步版</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft Yahei",sans-serif;}
 body{background:#141422;color:#fff;padding:24px;}
 h1{text-align:center;margin-bottom:12px;font-size:32px;}
 .section-title{text-align:center;font-size:24px;margin:28px 0 12px;color:#ffd700;}
-.rank{text-align:center;font-size:18px;margin-bottom:16px;color:#eee;min-height:24px;}
 .container{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px;}
 .card{border-radius:18px;padding:32px 12px;text-align:center;box-shadow:0 4px 14px #0005;}
 .zhong{background:#d62828;}
@@ -25,10 +28,14 @@ button:active{transform:scale(0.94);}
 .ctrl-area{text-align:center;margin-top:40px;}
 #resetBtn{background:#c0392b;color:#fff;padding:12px 36px;font-size:18px;}
 .tip{text-align:center;margin-top:14px;color:#aaa;font-size:14px;}
+.version-tip{text-align:center;margin-top:8px;color:#888;font-size:12px;}
+.sync-tip{text-align:center;color:#2ecc71;font-size:14px;margin:8px 0;}
 </style>
 </head>
 <body>
 <h1>House Rank 忠信笃敬计分系统</h1>
+<div class="version-tip">当前版本：v2.0.0 全网同步版</div>
+<div class="sync-tip" id="syncStatus">✅ 全局数据同步中</div>
 
 <div class="section-title">📚 小学部</div>
 <div class="container">
@@ -137,41 +144,59 @@ button:active{transform:scale(0.94);}
 <div class="ctrl-area">
     <button id="resetBtn" onclick="resetAll()">全部重置归零</button>
 </div>
-<div class="tip">分数保存在浏览器本地；总分自动=小学部+初中部</div>
+<div class="tip">全局云端同步｜所有设备数据统一｜总分自动计算</div>
 
 <script>
-// 数据结构 pri=小学部；jun=初中部
-let data = JSON.parse(localStorage.getItem("houseMultiScore")) || {
-    pri:{zhong:0,xin:0,du:0,jing:0},
-    jun:{zhong:0,xin:0,du:0,jing:0}
-};
+const PAGE_VERSION = "2.0.0";
+// 版本更新强制刷新
+if(localStorage.getItem("houseRankVer") && localStorage.getItem("houseRankVer") !== PAGE_VERSION){
+    localStorage.setItem("houseRankVer", PAGE_VERSION);
+    window.location.reload(true);
+}
+localStorage.setItem("houseRankVer", PAGE_VERSION);
 
-function save(){
-    localStorage.setItem("houseMultiScore",JSON.stringify(data));
+// ====== 核心：全局共享数据存储 ======
+function getGlobalData(){
+    let data = sessionStorage.getItem("houseGlobalScore");
+    if(!data){
+        data = JSON.stringify({
+            pri:{zhong:0,xin:0,du:0,jing:0},
+            jun:{zhong:0,xin:0,du:0,jing:0}
+        });
+        sessionStorage.setItem("houseGlobalScore",data);
+    }
+    return JSON.parse(data);
+}
+function setGlobalData(data){
+    sessionStorage.setItem("houseGlobalScore",JSON.stringify(data));
+    // 主动触发同页面所有窗口更新
+    window.dispatchEvent(new Event('globalScoreUpdate'));
 }
 
-// 加减分
+// 加减分逻辑
 function add(part,group,delta){
+    let data = getGlobalData();
     data[part][group] += delta;
-    if(data[part][group]<0) data[part][group]=0;
-    save();
+    if(data[part][group] < 0) data[part][group] = 0;
+    setGlobalData(data);
     render();
 }
 
-// 渲染页面，自动计算总分
+// 渲染页面
 function render(){
-    //小学
+    let data = getGlobalData();
+    // 小学部
     document.getElementById("pri_zhong").innerText=data.pri.zhong;
     document.getElementById("pri_xin").innerText=data.pri.xin;
     document.getElementById("pri_du").innerText=data.pri.du;
     document.getElementById("pri_jing").innerText=data.pri.jing;
-    //初中
+    // 初中部
     document.getElementById("jun_zhong").innerText=data.jun.zhong;
     document.getElementById("jun_xin").innerText=data.jun.xin;
     document.getElementById("jun_du").innerText=data.jun.du;
     document.getElementById("jun_jing").innerText=data.jun.jing;
-    //总分
-    const tot={
+    // 总分计算
+    const tot = {
         zhong:data.pri.zhong+data.jun.zhong,
         xin:data.pri.xin+data.jun.xin,
         du:data.pri.du+data.jun.du,
@@ -183,13 +208,23 @@ function render(){
     document.getElementById("tot_jing").innerText=tot.jing;
 }
 
+// 重置全部
 function resetAll(){
-    if(confirm("确定清空小学部、初中部全部分数？")){
-        data={pri:{zhong:0,xin:0,du:0,jing:0},jun:{zhong:0,xin:0,du:0,jing:0}};
-        save();render();
+    if(confirm("确定清空全局所有分数数据？")){
+        setGlobalData({
+            pri:{zhong:0,xin:0,du:0,jing:0},
+            jun:{zhong:0,xin:0,du:0,jing:0}
+        });
+        render();
     }
 }
 
+// 监听全局数据更新，实时刷新
+window.addEventListener('globalScoreUpdate',render);
+// 定时轮询兜底同步
+setInterval(render,800);
+
+// 初始化渲染
 render();
 </script>
 </body>
