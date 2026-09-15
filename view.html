@@ -3,88 +3,104 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>House Rank 公开分数查询</title>
+<title>HouseRank 公开分数｜小学‑初中‑总分</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft Yahei",sans-serif;}
-body{background:#141422;color:#fff;padding:20px;}
-h1{text-align:center;margin-bottom:10px;font-size:32px;}
-.sub-title{text-align:center;color:#ccc;margin-bottom:24px;font-size:16px;}
-.rank{text-align:center;font-size:20px;margin-bottom:20px;color:#ffd700;min-height:28px;}
-.container{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px;}
-.card{border-radius:20px;padding:40px 16px;text-align:center;box-shadow:0 4px 12px #0004;}
+body{background:#141422;color:#fff;padding:24px;}
+h1{text-align:center;margin-bottom:12px;font-size:32px;}
+.section-title{text-align:center;font-size:24px;margin:28px 0 12px;color:#ffd700;}
+.container{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px;}
+.card{border-radius:18px;padding:32px 12px;text-align:center;box-shadow:0 4px 14px #0005;}
 .zhong{background:#d62828;}
 .xin{background:#2a9d48;}
 .du{background:#f9ca24;color:#111;}
 .jing{background:#1e78c2;}
-.group-zh{font-size:36px;font-weight:bold;margin-bottom:4px;}
-.group-en{font-size:16px;opacity:0.9;margin-bottom:12px;letter-spacing:1px;}
-.score-num{font-size:72px;font-weight:bold;margin-bottom:20px;}
+.group-zh{font-size:30px;font-weight:bold;margin-bottom:2px;}
+.group-en{font-size:14px;opacity:0.85;margin-bottom:8px;}
+.score-num{font-size:60px;font-weight:bold;}
 </style>
 </head>
 <body>
-<h1>House Rank</h1>
-<div class="sub-title">忠 · Loyalty｜信 · Sincerity｜笃 · Integrity｜敬 · Respect</div>
-<div class="rank" id="rankText"></div>
+<h1>House Rank 忠信笃敬计分</h1>
 
+<div class="section-title">📚 小学部</div>
 <div class="container">
     <div class="card zhong">
-        <div class="group-zh">忠</div>
-        <div class="group-en">Loyalty</div>
-        <div class="score-num" id="s_zhong">0</div>
+        <div class="group-zh">忠</div><div class="group-en">Loyalty</div>
+        <div class="score-num" id="pri_zhong">0</div>
     </div>
-
     <div class="card xin">
-        <div class="group-zh">信</div>
-        <div class="group-en">Sincerity</div>
-        <div class="score-num" id="s_xin">0</div>
+        <div class="group-zh">信</div><div class="group-en">Sincerity</div>
+        <div class="score-num" id="pri_xin">0</div>
     </div>
-
     <div class="card du">
-        <div class="group-zh">笃</div>
-        <div class="group-en">Integrity</div>
-        <div class="score-num" id="s_du">0</div>
+        <div class="group-zh">笃</div><div class="group-en">Integrity</div>
+        <div class="score-num" id="pri_du">0</div>
     </div>
-
     <div class="card jing">
-        <div class="group-zh">敬</div>
-        <div class="group-en">Respect</div>
-        <div class="score-num" id="s_jing">0</div>
+        <div class="group-zh">敬</div><div class="group-en">Respect</div>
+        <div class="score-num" id="pri_jing">0</div>
     </div>
 </div>
 
+<div class="section-title">🎓 初中部</div>
+<div class="container">
+    <div class="card zhong">
+        <div class="group-zh">忠</div><div class="group-en">Loyalty</div>
+        <div class="score-num" id="jun_zhong">0</div>
+    </div>
+    <div class="card xin">
+        <div class="group-zh">信</div><div class="group-en">Sincerity</div>
+        <div class="score-num" id="jun_xin">0</div>
+    </div>
+    <div class="card du">
+        <div class="group-zh">笃</div><div class="group-en">Integrity</div>
+        <div class="score-num" id="jun_du">0</div>
+    </div>
+    <div class="card jing">
+        <div class="group-zh">敬</div><div class="group-en">Respect</div>
+        <div class="score-num" id="jun_jing">0</div>
+    </div>
+</div>
+
+<div class="section-title">🏆 总 分（小学+初中）</div>
+<div class="container">
+    <div class="card zhong"><div class="group-zh">忠</div><div class="group-en">Loyalty</div><div class="score-num" id="tot_zhong">0</div></div>
+    <div class="card xin"><div class="group-zh">信</div><div class="group-en">Sincerity</div><div class="score-num" id="tot_xin">0</div></div>
+    <div class="card du"><div class="group-zh">笃</div><div class="group-en">Integrity</div><div class="score-num" id="tot_du">0</div></div>
+    <div class="card jing"><div class="group-zh">敬</div><div class="group-en">Respect</div><div class="score-num" id="tot_jing">0</div></div>
+</div>
+
 <script>
-const nameMap = {
-  zhong:{zh:"忠",en:"Loyalty"},
-  xin:{zh:"信",en:"Sincerity"},
-  du:{zh:"笃",en:"Integrity"},
-  jing:{zh:"敬",en:"Respect"}
-};
-
-let score = JSON.parse(localStorage.getItem("houseRankScore")) || { zhong:0, xin:0, du:0, jing:0 };
-
 function render(){
-    document.getElementById('s_zhong').innerText = score.zhong;
-    document.getElementById('s_xin').innerText = score.xin;
-    document.getElementById('s_du').innerText = score.du;
-    document.getElementById('s_jing').innerText = score.jing;
-    updateRank();
+    const data = JSON.parse(localStorage.getItem("houseMultiScore")) || {
+        pri:{zhong:0,xin:0,du:0,jing:0},
+        jun:{zhong:0,xin:0,du:0,jing:0}
+    };
+    //小学
+    document.getElementById("pri_zhong").innerText=data.pri.zhong;
+    document.getElementById("pri_xin").innerText=data.pri.xin;
+    document.getElementById("pri_du").innerText=data.pri.du;
+    document.getElementById("pri_jing").innerText=data.pri.jing;
+    //初中
+    document.getElementById("jun_zhong").innerText=data.jun.zhong;
+    document.getElementById("jun_xin").innerText=data.jun.xin;
+    document.getElementById("jun_du").innerText=data.jun.du;
+    document.getElementById("jun_jing").innerText=data.jun.jing;
+    //总分自动求和
+    const tot={
+        zhong:data.pri.zhong+data.jun.zhong,
+        xin:data.pri.xin+data.jun.xin,
+        du:data.pri.du+data.jun.du,
+        jing:data.pri.jing+data.jun.jing
+    };
+    document.getElementById("tot_zhong").innerText=tot.zhong;
+    document.getElementById("tot_xin").innerText=tot.xin;
+    document.getElementById("tot_du").innerText=tot.du;
+    document.getElementById("tot_jing").innerText=tot.jing;
 }
-
-function updateRank(){
-    let arr = Object.entries(score).map(([k,v])=>({
-        name:`${nameMap[k].zh}(${nameMap[k].en})`,
-        score:v
-    }));
-    arr.sort((a,b)=>b.score - a.score);
-    document.getElementById('rankText').innerText = "Current Rank：" + arr.map(i=>`${i.name} ${i.score}pts`).join(" ｜ ");
-}
-
-setInterval(()=>{
-    score = JSON.parse(localStorage.getItem("houseRankScore")) || { zhong:0, xin:0, du:0, jing:0 };
-    render();
-},1000);
-
 render();
+setInterval(render,1000);
 </script>
 </body>
 </html>
